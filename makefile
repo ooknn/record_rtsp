@@ -1,15 +1,15 @@
 
 INCLUDE_DIR=-I ${HOME}/tools/install/ffmpeg/include \
-			-I/home/gyl/tools/live555/UsageEnvironment/include \
-			-I/home/gyl/tools/live555/groupsock/include \
-			-I/home/gyl/tools/live555/BasicUsageEnvironment/include  \
-			-I/home/gyl/tools/live555/liveMedia/include 
+			-I${HOME}/tools/live555/UsageEnvironment/include \
+			-I${HOME}/tools/live555/groupsock/include \
+			-I${HOME}/tools/live555/BasicUsageEnvironment/include  \
+			-I${HOME}/tools/live555/liveMedia/include 
 			
 LIB_DIR= -L ${HOME}/tools/install/ffmpeg/lib -L/usr/local/lib \
-		 -L/home/gyl/tools/live555/liveMedia \
-		 -L/home/gyl/tools/live555/groupsock \
-		 -L/home/gyl/tools/live555/BasicUsageEnvironment \
-		 -L/home/gyl/tools/live555/UsageEnvironment
+		 -L${HOME}/tools/live555/liveMedia \
+		 -L${HOME}/tools/live555/groupsock \
+		 -L${HOME}/tools/live555/BasicUsageEnvironment \
+		 -L${HOME}/tools/live555/UsageEnvironment
 
 
 LIBS=-lavdevice -lavfilter -lavformat -lavcodec \

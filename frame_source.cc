@@ -102,7 +102,6 @@ void RecordFrameSource::DeliverData()
         fFrameSize = static_cast<unsigned int>(data_.size());
     }
 
-    std::cout << "encodedData size " << fFrameSize << std::endl;
     gettimeofday(&fPresentationTime, nullptr);
     memcpy(fTo, data_.data(), fFrameSize);
     FramedSource::afterGetting(this);

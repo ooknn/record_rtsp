@@ -23,6 +23,32 @@ extern "C" {
 #define WIDTH 1920
 #define HEIGHT 1080
 
+#define STOP_LOOP_BREAK                                                \
+    {                                                                  \
+        if (stop_flag_.load())                                         \
+        {                                                              \
+            std::cout << "needToStopFlag " << stop_flag_ << std::endl; \
+            break;                                                     \
+        }                                                              \
+    }
+
+#define DELAY_LOOP                                                      \
+    {                                                                   \
+        if (delay_.load())                                              \
+        {                                                               \
+            std::this_thread::sleep_for(std::chrono::milliseconds(30)); \
+        }                                                               \
+    }
+
+#define ERROR_BREAK(x)                                \
+    {                                                 \
+        if (x == AVERROR(EAGAIN) || x == AVERROR_EOF) \
+        {                                             \
+            break;                                    \
+        }                                             \
+        assert(x >= 0);                               \
+    }
+
 RecordCodec::~RecordCodec()
 {
 
@@ -133,7 +159,6 @@ void RecordCodec::EncodeFrameToSend()
 
 void RecordCodec::EncodeFrame()
 {
-
     while (true)
     {
         if (stop_flag_.load())
@@ -158,32 +183,6 @@ void RecordCodec::CleanDeque()
         }
     }
 }
-
-#define STOP_LOOP_BREAK                                                \
-    {                                                                  \
-        if (stop_flag_.load())                                         \
-        {                                                              \
-            std::cout << "needToStopFlag " << stop_flag_ << std::endl; \
-            break;                                                     \
-        }                                                              \
-    }
-
-#define DELAY_LOOP                                                      \
-    {                                                                   \
-        if (delay_.load())                                              \
-        {                                                               \
-            std::this_thread::sleep_for(std::chrono::milliseconds(30)); \
-        }                                                               \
-    }
-
-#define ERROR_BREAK(x)                                \
-    {                                                 \
-        if (x == AVERROR(EAGAIN) || x == AVERROR_EOF) \
-        {                                             \
-            break;                                    \
-        }                                             \
-        assert(x >= 0);                               \
-    }
 
 void RecordCodec::Run()
 {
@@ -223,11 +222,8 @@ void RecordCodec::Run()
             DELAY_LOOP;
 
             statusCode = av_buffersink_get_frame(buffer_sink_ctx_, filter_frame_);
-            if (statusCode == AVERROR(EAGAIN) || statusCode == AVERROR_EOF)
-            {
-                break;
-            }
-            assert(statusCode >= 0);
+
+            ERROR_BREAK(statusCode);
 
             auto filter_clean = make_scoped_exit([&filter = filter_frame_]() { av_frame_unref(filter); });
 
@@ -242,11 +238,6 @@ void RecordCodec::Run()
     AVFrame *p = NULL;
     deque_.Push(std::move(p));
     running_flag_.store(false);
-    std::cout << "run over\n";
-}
-
-void RecordCodec::RunDelay()
-{
 }
 
 void RecordCodec::Stop()
@@ -357,12 +348,6 @@ void RecordCodec::InitializeEncoder()
     avcodec_parameters_from_context(out_ctx_.videoStream->codecpar, out_ctx_.codecContext);
     AVDictionary *options = nullptr;
     av_dict_set(&options, "preset", "ultrafast", 0);
-    //av_dict_set(&options, "tune", "zerolatency", 0);
-    //av_dict_set(&options, "b", "100K", 0);
-    //av_opt_set(out_ctx_.codecContext->priv_data, "preset", "fast", 0);
-
-    //av_opt_set(encoderContext.codecContext->priv_data, "x265-params", config.get_codec_params_str().data(), 0);
-    //out_ctx_.codecContext->thread_count = 8;
     statCode = avcodec_open2(out_ctx_.codecContext, out_ctx_.codec, NULL);
     av_dict_free(&options);
     assert(statCode == 0);
@@ -515,8 +500,6 @@ void RecordCodec::CleanUp()
     avformat_close_input(&in_ctx_.formatContext);
     avformat_free_context(in_ctx_.formatContext);
     avformat_free_context(out_ctx_.formatContext);
-    in_ctx_ = {};
-    out_ctx_ = {};
 
     std::cout << "Cleanup transcoder!" << std::endl;
 }
