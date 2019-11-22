@@ -413,23 +413,12 @@ void RecordCodec::InitFilters()
     inputs->next = nullptr;
 
     // create filter query
-    char frameStepFilterQuery[16];
+    char filter_setting[64] = {0};
 
-    if (this->filter_query_.empty())
-    {
-
-        snprintf(frameStepFilterQuery, sizeof(frameStepFilterQuery), "fps=fps=%d/%d", static_cast<int>(15), 1);
-
-        // add graph represented by the filter query
-        status = avfilter_graph_parse(filter_fraph_, frameStepFilterQuery, inputs, outputs, nullptr);
-        assert(status >= 0);
-    }
-    else
-    {
-
-        status = avfilter_graph_parse(filter_fraph_, filter_query_.c_str(), inputs, outputs, nullptr);
-        assert(status >= 0);
-    }
+    //        const char *filter_descr = "movie=a.png[wm];[in][wm]overlay=5:5[out]";
+    snprintf(filter_setting, sizeof(filter_setting), "fps=fps=%d/%d", static_cast<int>(15), 1);
+    status = avfilter_graph_parse(filter_fraph_, filter_setting, inputs, outputs, nullptr);
+    assert(status >= 0);
 
     status = avfilter_graph_config(filter_fraph_, nullptr);
     assert(status >= 0);
